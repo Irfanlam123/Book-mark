@@ -6,16 +6,21 @@ The application requires the following environment variables to be set in `.env.
 
 | Variable Name | Description | Value (Example) |
 | :--- | :--- | :--- |
-| `NEXT_PUBLIC_SUPABASE_URL` | The URL of your Supabase project. | `https://your-project-id.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | The anonymous public key for your Supabase project. | `eyJhbGciOiJIUzI1NiIsInR...` |
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase Project URL | `https://xyz.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase Anon (Public) Key | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
 
-## How to Get These Keys
+## Optional / Advanced
 
-1.  Go to your [Supabase Dashboard](https://supabase.com/dashboard).
-2.  Select your project.
-3.  Go to **Settings** -> **API**.
-4.  Copy the **Project URL** and **anon public** key.
+| Variable Name | Description | Value (Example) |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_SITE_URL` | **CRITICAL FOR MOBILE/PROD**: The absolute URL of your site. If not set, defaults to `http://localhost:3000`. | `https://my-app.vercel.app` |
 
-## Production (Vercel)
+---
 
-When deploying to Vercel, ensure you add these variables in the **Settings** -> **Environment Variables** section of your Vercel project.
+## 📱 Troubleshooting Mobile Login
+
+If login works on PC but fails on mobile/cross-device:
+
+1.  **Set `NEXT_PUBLIC_SITE_URL`**: Ensure this is set to your production URL (e.g., `https://smart-bookmark-app.vercel.app`) in your Vercel Project Settings.
+2.  **Redirect URLs**: Add `https://smart-bookmark-app.vercel.app/**` to your **Supabase Auth -> Redirect URLs** and **Google Cloud Console**.
+3.  **Local Testing**: You cannot test Google Login on mobile via a local IP (e.g., `192.168.x.x`) because Google blocks private IP redirects. Use a tunnel like `ngrok` or deploy to Vercel to test on mobile.

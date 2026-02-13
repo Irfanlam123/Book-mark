@@ -17,12 +17,15 @@ export default async function Home() {
   const signIn = async () => {
     "use server";
     const supabase = await createClient();
-    const origin = (await headers()).get("origin");
+
+    // Use the robust utility to get the correct URL
+    const { getURL } = await import("@/utils/get-url");
+    const redirectUrl = getURL();
 
     const { error, data } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/auth/callback`,
+        redirectTo: `${redirectUrl}auth/callback`,
         queryParams: {
           access_type: "offline",
           prompt: "consent",
