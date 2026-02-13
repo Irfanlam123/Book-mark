@@ -69,7 +69,7 @@ export default async function Dashboard() {
                     </p>
                 </div>
 
-                <BookmarkList initialUser={user} />
+                <BookmarkList />
             </main>
 
             <footer className="border-t border-gray-200 py-8 text-center text-sm text-gray-400 bg-white">

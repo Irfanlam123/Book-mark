@@ -5,36 +5,33 @@ import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { useBookmarks } from "@/contexts/bookmark-context";
 
-import { User } from "@supabase/supabase-js";
+export function BookmarkForm() {
+    const { addBookmark } = useBookmarks();
 
-export function BookmarkForm({ user }: { user: User }) {
+    // Local UI state
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+
+    // Form Data
     const [title, setTitle] = useState("");
     const [url, setUrl] = useState("");
-    const supabase = createClient();
+    const [description, setDescription] = useState("");
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
         setLoading(true);
 
-        const { error } = await supabase.from("bookmarks").insert({
-            title,
-            url,
-            user_id: user.id,
-        });
+        // Call Context Action
+        await addBookmark(title, url, description);
 
-        if (error) {
-            console.error("Error adding bookmark:", error);
-            alert(`Error: ${error.message}`);
-        } else {
-            setTitle("");
-            setUrl("");
-            setIsOpen(false);
-        }
+        // Reset Form
+        setTitle("");
+        setUrl("");
+        setDescription("");
+        setIsOpen(false);
         setLoading(false);
     }
 
@@ -60,29 +57,42 @@ export function BookmarkForm({ user }: { user: User }) {
                     className="bg-white border border-gray-100 p-6 rounded-2xl shadow-xl shadow-gray-200/50 space-y-5"
                     onSubmit={onSubmit}
                 >
-                    <div className="space-y-2">
-                        <Label htmlFor="title" className="text-gray-700 font-medium">Title</Label>
-                        <Input
-                            id="title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="e.g. My Portfolio"
-                            required
-                            className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 rounded-lg transition-all"
-                        />
-                    </div>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="title" className="text-gray-700 font-medium">Title</Label>
+                            <Input
+                                id="title"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="e.g. My Portfolio"
+                                required
+                                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 rounded-lg"
+                            />
+                        </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="url" className="text-gray-700 font-medium">URL</Label>
-                        <Input
-                            id="url"
-                            type="url"
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
-                            placeholder="https://example.com"
-                            required
-                            className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 rounded-lg transition-all"
-                        />
+                        <div className="space-y-2">
+                            <Label htmlFor="url" className="text-gray-700 font-medium">URL</Label>
+                            <Input
+                                id="url"
+                                type="url"
+                                value={url}
+                                onChange={(e) => setUrl(e.target.value)}
+                                placeholder="https://example.com"
+                                required
+                                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 rounded-lg"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="description" className="text-gray-700 font-medium">Description (Optional)</Label>
+                            <Input
+                                id="description"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Short description..."
+                                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 rounded-lg"
+                            />
+                        </div>
                     </div>
 
                     <div className="flex gap-3 pt-2">

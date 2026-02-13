@@ -9,6 +9,8 @@ The **Smart Bookmark App** is a streamlined utility that allows users to save, m
 ### Key Features
 - **Secure Authentication**: Log in seamlessly using **Google OAuth**.
 - **Instant Synchronization**: Add a bookmark on one device, and watch it appear instantly on another—**no refresh required**.
+- **Global Realtime**: subscription persists across all dashboard pages.
+- **Interactive Feedback**: Beautiful Toast notifications for all actions.
 - **Strict Privacy**: Row Level Security (RLS) ensures that **User A can NEVER see User B's data**.
 - **Optimized Performance**: Built with the Next.js App Router for optimal loading speeds and SEO.
 - **Modern UI**: Clean, responsive interface styled with Tailwind CSS.

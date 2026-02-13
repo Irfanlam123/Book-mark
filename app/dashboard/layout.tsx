@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { LogOut, LayoutDashboard } from "lucide-react";
+import { BookmarkProvider } from "@/contexts/bookmark-context";
+import { ToastProvider } from "@/contexts/toast-context";
 
 export default async function DashboardLayout({
     children,
@@ -18,18 +17,11 @@ export default async function DashboardLayout({
         redirect("/");
     }
 
-    const signOut = async () => {
-        "use server";
-        const supabase = await createClient();
-        await supabase.auth.signOut();
-        redirect("/");
-    };
-
     return (
-        <div className="min-h-screen bg-background">
-            <main className="container mx-auto px-4 py-8">
+        <ToastProvider>
+            <BookmarkProvider initialUser={user}>
                 {children}
-            </main>
-        </div>
+            </BookmarkProvider>
+        </ToastProvider>
     );
 }

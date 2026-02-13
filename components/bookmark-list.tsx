@@ -1,106 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { Bookmark, BookmarkCard } from "./bookmark-card";
-import { BookmarkForm } from "./bookmark-form";
+import { BookmarkCard } from "./bookmark-card";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Zap, BookmarkX } from "lucide-react";
-import { User } from "@supabase/supabase-js";
+import { Loader2, BookmarkX, Zap } from "lucide-react";
+import { useBookmarks } from "@/contexts/bookmark-context";
+import { BookmarkForm } from "./bookmark-form";
 
-export function BookmarkList({ initialUser }: { initialUser: User }) {
-    const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-    const [loading, setLoading] = useState(true);
-    const supabase = createClient();
+export function BookmarkList() {
+    const { bookmarks, loading, deleteBookmark } = useBookmarks();
 
-    // 1. Fetch Initial Data
-    useEffect(() => {
-        if (!initialUser) return;
-
-        const fetchBookmarks = async () => {
-            console.log("Fetching initial bookmarks for user:", initialUser.id);
-            const { data, error } = await supabase
-                .from("bookmarks")
-                .select("*")
-                .eq("user_id", initialUser.id) // Security double-check
-                .order("created_at", { ascending: false });
-
-            if (error) {
-                console.error("Error fetching bookmarks:", error);
-            } else {
-                setBookmarks(data || []);
-            }
-            setLoading(false);
-        };
-
-        fetchBookmarks();
-    }, [initialUser, supabase]);
-
-    // 2. Strict Realtime Subscription
-    useEffect(() => {
-        if (!initialUser) return;
-
-        console.log("Setting up Realtime subscription for user:", initialUser.id);
-
-        const channel = supabase
-            .channel(`bookmarks-${initialUser.id}`) // Unique channel name per user
-            .on(
-                "postgres_changes",
-                {
-                    event: "*", // Listen to INSERT, UPDATE, DELETE
-                    schema: "public",
-                    table: "bookmarks",
-                    filter: `user_id=eq.${initialUser.id}`, // strict server-side filter
-                },
-                (payload) => {
-                    console.log("Realtime payload received:", payload);
-
-                    if (payload.eventType === "INSERT") {
-                        const newBookmark = payload.new as Bookmark;
-                        setBookmarks((prev) => {
-                            if (prev.some((b) => b.id === newBookmark.id)) {
-                                console.log("Duplicate realtime event ignored:", newBookmark.id);
-                                return prev;
-                            }
-                            return [newBookmark, ...prev];
-                        });
-                    }
-
-                    if (payload.eventType === "DELETE") {
-                        const oldBookmark = payload.old as { id: string };
-                        setBookmarks((prev) =>
-                            prev.filter((b) => b.id !== oldBookmark.id)
-                        );
-                    }
-                }
-            )
-            .subscribe((status) => {
-                console.log("Realtime subscription status:", status);
-            });
-
-        return () => {
-            console.log("Cleaning up Realtime subscription");
-            supabase.removeChannel(channel);
-        };
-    }, [initialUser, supabase]);
-
-    const handleDelete = async (id: string) => {
-        // Optimistic UI Update
-        const previousBookmarks = [...bookmarks];
-        setBookmarks((current) => current.filter((b) => b.id !== id));
-
-        const { error } = await supabase.from("bookmarks").delete().eq("id", id);
-
-        if (error) {
-            console.error("Error deleting bookmark:", error);
-            setBookmarks(previousBookmarks); // Revert on error
-            alert("Failed to delete bookmark");
-        }
-    };
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <p className="text-muted-foreground animate-pulse">
+                    Syncing your bookmarks...
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full max-w-4xl mx-auto">
-            <BookmarkForm user={initialUser} />
+            {/* Form is part of the list view for now, or can be separate. Keeping structure similar. */}
+            <BookmarkForm />
 
             <div className="flex items-center justify-between mb-8 px-2">
                 <span className="text-sm font-semibold uppercase tracking-widest text-gray-400">
@@ -112,32 +35,44 @@ export function BookmarkList({ initialUser }: { initialUser: User }) {
                 </div>
             </div>
 
-            {loading ? (
-                <div className="flex justify-center py-20">
-                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                </div>
-            ) : bookmarks.length === 0 ? (
-                <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm">
+            {bookmarks.length === 0 ? (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-24 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm"
+                >
                     <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
                         <BookmarkX className="w-8 h-8 text-blue-400" />
                     </div>
-                    <h3 className="text-gray-900 font-medium text-lg">No bookmarks yet</h3>
-                    <p className="text-gray-500 text-sm mt-2 max-w-xs mx-auto">
-                        Add your first bookmark above to start building your collection.
-                    </p>
-                </div>
+                    <div className="space-y-1">
+                        <h3 className="font-semibold text-lg text-gray-900">No bookmarks yet</h3>
+                        <p className="text-muted-foreground max-w-xs mx-auto text-sm">
+                            Start building your collection by adding your favorite websites above.
+                        </p>
+                    </div>
+                </motion.div>
             ) : (
-                <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <AnimatePresence mode="popLayout">
                         {bookmarks.map((bookmark) => (
-                            <BookmarkCard
+                            <motion.div
                                 key={bookmark.id}
-                                bookmark={bookmark}
-                                onDelete={handleDelete}
-                            />
+                                layout
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                            >
+                                <BookmarkCard
+                                    bookmark={bookmark}
+                                    onDelete={async (id) => {
+                                        await deleteBookmark(id);
+                                    }}
+                                />
+                            </motion.div>
                         ))}
                     </AnimatePresence>
-                </motion.div>
+                </div>
             )}
         </div>
     );
