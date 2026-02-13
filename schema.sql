@@ -11,17 +11,18 @@ create table bookmarks (
 alter table bookmarks enable row level security;
 
 -- Create Policy: Users can only see their own bookmarks
-create policy "Users can view own bookmarks"
+-- Create Policy: Users can only see their own bookmarks
+create policy "select own"
   on bookmarks for select
   using ( auth.uid() = user_id );
 
 -- Create Policy: Users can insert their own bookmarks
-create policy "Users can insert own bookmarks"
+create policy "insert own"
   on bookmarks for insert
   with check ( auth.uid() = user_id );
 
 -- Create Policy: Users can delete their own bookmarks
-create policy "Users can delete own bookmarks"
+create policy "delete own"
   on bookmarks for delete
   using ( auth.uid() = user_id );
 

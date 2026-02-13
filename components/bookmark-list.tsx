@@ -58,8 +58,7 @@ export function BookmarkList({ initialUser }: { initialUser: User }) {
                     if (payload.eventType === "INSERT") {
                         const newBookmark = payload.new as Bookmark;
                         setBookmarks((prev) => {
-                            // Deduplication check
-                            if (prev.find((b) => b.id === newBookmark.id)) {
+                            if (prev.some((b) => b.id === newBookmark.id)) {
                                 console.log("Duplicate realtime event ignored:", newBookmark.id);
                                 return prev;
                             }

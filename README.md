@@ -41,19 +41,23 @@ The app uses Supabase Realtime to push changes to the client instantly.
     - **INSERT**: New bookmark is prepended to the local state.
     - **DELETE**: Deleted bookmark is filtered out of the local state.
 
-## 🚧 Challenges & Solutions
+## 🚧 Problems Faced & Solutions
 
-### 1. Realtime Security & RLS
-*Challenge*: RLS policies prevented realtime events from broadcasting to clients initially.
-*Solution*: Realtime subscriptions must include the same filter logic (`user_id=eq.ID`) as the RLS policy to be authorized.
+### 1. Cross-user data leak
+*Problem*: Fetching all bookmarks without a user filter relies entirely on RLS, which can be risky if policies are disabled.
+*Fix*: Changed query to `.select("*").eq("user_id", user.id)` to strictly filter data at the application level as well.
 
-### 2. Duplicate Events
-*Challenge*: React strict mode or rapid network changes caused duplicate bookmark entries.
-*Solution*: Implemented client-side deduplication checks (`if (current.some(b => b.id === newBookmark.id)) return current;`) before updating state.
+### 2. Realtime not working
+*Problem*: Realtime updates requires the publication to be enabled for the specific table, which was missing.
+*Fix*: Ran `alter publication supabase_realtime add table bookmarks;` and ensured client-side subscription filters by `user_id`.
 
-### 3. Google OAuth Redirects
-*Challenge*: Configuring correct redirect URLs for both Localhost and Production.
-*Solution*: Used dynamic `window.location.origin` or configured `NEXT_PUBLIC_SITE_URL` env var to handle redirects gracefully in both environments.
+### 3. Missing user_id in insert
+*Problem*: Inserting data without `user_id` caused RLS violations or orphaned data.
+*Fix*: Updated `bookmark-form.tsx` to explicitly include `user_id: user.id` in the insert payload.
+
+### 4. Server component fetching global data
+*Problem*: Fetching data in a Server Component without proper context or filters could lead to caching issues or data leaks.
+*Fix*: Moved data fetching to the Client Component (`bookmark-list.tsx`) within a `useEffect`, ensuring it only runs for the authenticated user on the client.
 
 ## 🧪 How to Run Locally
 
